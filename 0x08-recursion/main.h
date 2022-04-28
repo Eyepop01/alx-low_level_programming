@@ -1,6 +1,12 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+/**
+ * File: main.h
+ * Desc: Header file containing prototype for all functions
+ * used in the 0x0x-recursion directory
+ */
+
 int _putchar(char);
 void _puts_recursion(char *s);
 void _print_rev_recursion(char *s);
