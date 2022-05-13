@@ -1,5 +1,5 @@
-#ifndef _HEADER_
-#define _HEADER_
+#ifndef _FUNCTION_POINTERS_
+#define _FUNCTION_POINTERS_
 
 #include <stdlib.h>
 
