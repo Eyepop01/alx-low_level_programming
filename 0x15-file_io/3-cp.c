@@ -1,72 +1,110 @@
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include "main.h"
+#include <stdio.h>
 
-void check_IO_stat(int stat, int fd, char *filename, char mode);
+int close_error(int fd);
+void read_error(char *filename);
+void write_error(char *filename);
+
 /**
- * main - copies the content of one file to another
- * @argc: argument count
- * @argv: arguments passed
- *
- * Return: 1 on success, exit otherwise
+ * main - copies the content of a file to another file.
+ * @argc: argument counter.
+ * @argv: argument vector.
+ * Return: always return 0, or exit.
  */
 int main(int argc, char *argv[])
 {
-	int src, dest, n_read = 1024, wrote, close_src, close_dest;
-	unsigned int mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
 	char buffer[1024];
+	int fd_file_from, fd_file_to;
+	ssize_t bytes_counted = 1;
 
+	/* check number of argument */
 	if (argc != 3)
 	{
-		dprintf(STDERR_FILENO, "%s", "Usage: cp file_from file_to\n");
+		dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
 		exit(97);
 	}
-	src = open(argv[1], O_RDONLY);
-	check_IO_stat(src, -1, argv[1], 'O');
-	dest = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, mode);
-	check_IO_stat(dest, -1, argv[2], 'W');
-	while (n_read == 1024)
+	/* open and check fd for file_from */
+	fd_file_from = open(argv[1], O_RDONLY);
+	if (fd_file_from < 0)
 	{
-		n_read = read(src, buffer, sizeof(buffer));
-		if (n_read == -1)
-			check_IO_stat(-1, -1, argv[1], 'O');
-		wrote = write(dest, buffer, n_read);
-		if (wrote == -1)
-			check_IO_stat(-1, -1, argv[2], 'W');
+		read_error(argv[1]);
+		exit(98);
 	}
-	close_src = close(src);
-	check_IO_stat(close_src, src, NULL, 'C');
-	close_dest = close(dest);
-	check_IO_stat(close_dest, dest, NULL, 'C');
+	/* open and check fd for file_to */
+	fd_file_to = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0664);
+	if (fd_file_to < 0)
+	{
+		write_error(argv[2]);
+		close_error(fd_file_from);
+		exit(99);
+	}
+
+	/* copy content - loop checks end of file (file_from) */
+	while (bytes_counted)
+	{
+		/* read the next 1020 bytes in file_from and check read error */
+		bytes_counted = read(fd_file_from, buffer, 1024);
+		if (bytes_counted < 0)
+		{
+			read_error(argv[1]);
+			close_error(fd_file_from);
+			close_error(fd_file_to);
+			exit(98);
+		}
+		/* check buffer end of file */
+		if (bytes_counted == 0)
+			break;
+		/* write the output in file_to and check write error */
+		bytes_counted = write(fd_file_to, buffer, bytes_counted);
+		if (bytes_counted < 0)
+		{
+			write_error(argv[2]);
+			close_error(fd_file_from);
+			close_error(fd_file_to);
+			exit(99);
+		}
+	}
+
+	/* close and check fd for file_from and file_to */
+	if (close_error(fd_file_from) < 0)
+	{
+		close_error(fd_file_to);
+		exit(100);
+	}
+	if (close_error(fd_file_to) < 0)
+		exit(100);
 	return (0);
 }
 
 /**
- * check_IO_stat - checks if a file can be opened or closed
- * @stat: file descriptor of the file to be opened
- * @filename: name of the file
- * @mode: closing or opening
- * @fd: file descriptor
- *
- * Return: void
+ * close_error - close a file descriptor and check for a possible error.
+ * @fd: file descriptor for file to be closed.
+ * Return: 1 if fd colud be closeed, -1 if fd could not be closed.
  */
-void check_IO_stat(int stat, int fd, char *filename, char mode)
+int close_error(int fd)
 {
-	if (mode == 'C' && stat == -1)
-	{
+	int close_output;
+
+	close_output = close(fd);
+	if (close_output < 0)
 		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd);
-		exit(100);
-	}
-	else if (mode == 'O' && stat == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", filename);
-		exit(98);
-	}
-	else if (mode == 'W' && stat == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", filename);
-		exit(99);
-	}
+	return (close_output);
+}
+
+/**
+ * read_error - print the read error.
+ * @filename: filename.
+ */
+void read_error(char *filename)
+{
+	dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", filename);
+}
+
+/**
+ * write_error - print the write error.
+ * @filename: filename.
+ */
+void write_error(char *filename)
+{
+	dprintf(STDERR_FILENO, "Error: Can't write to %s\n", filename);
 }
