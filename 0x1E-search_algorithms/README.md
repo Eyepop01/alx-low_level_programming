@@ -1,0 +1,6 @@
+# Search Algorithm
+In computer science, a search algorithm is an algorithm (if more than one, algorithms[1]) designed to solve a search problem. Search algorithms work to retrieve information stored within particular data structure, or calculated in the search space of a problem domain, with either discrete or continuous values.
+
+While the search problems described above and web search are both problems in information retrieval, they are generally studied as separate subfields and are solved and evaluated differently. Web search problems are generally focused on filtering and finding documents highly relevant to human queries. Classic search algorithms are evaluated on how fast they can find a solution, and whether the solution found is optimal. Though information retrieval algorithms must be fast, the quality of ranking, and whether good results have been left out and bad results included, is more important.
+
+The appropriate search algorithm often depends on the data structure being searched, and may also include prior knowledge about the data. Search algorithms can be made faster or more efficient by specially constructed database structures, such as search trees, hash maps, and database indexes.
